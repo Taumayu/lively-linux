@@ -73,6 +73,49 @@ public static class WaylandDisplayScanner
         {
             Console.WriteLine("wlr-randr failed or not found: " + ex.Message);
         }
+
+        if (displays.Count == 0)
+        {
+            try
+            {
+                var pInfo = new ProcessStartInfo
+                {
+                    FileName = "xrandr",
+                    Arguments = "--query",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(pInfo);
+                if (process != null)
+                {
+                    var output = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit();
+
+                    var lines = output.Split('\n');
+                    foreach (var line in lines)
+                    {
+                        var match = Regex.Match(line, @"^(\S+)\s+connected(?:\s+primary)?\s+(\d+x\d+\+\d+\+\d+)?");
+                        if (match.Success)
+                        {
+                            var name = match.Groups[1].Value;
+                            var resolution = match.Groups[2].Success ? match.Groups[2].Value : "";
+                            displays.Add(new DisplayInfo
+                            {
+                                Name = name,
+                                Description = resolution,
+                                IsEnabled = true
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("xrandr fallback failed: " + ex.Message);
+            }
+        }
         
         return displays.Where(d => d.IsEnabled).ToList();
     }
