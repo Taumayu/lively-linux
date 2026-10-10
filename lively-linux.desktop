@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Lively Wallpaper
+Comment=Animated and interactive desktop wallpapers for Linux
+Exec=/home/auma/.local/bin/lively-linux
+Icon=lively-linux
+Terminal=false
+Type=Application
+Categories=Utility;Graphics;DesktopSettings;
+StartupNotify=true
+StartupWMClass=Lively.Linux.UI
+Keywords=wallpaper;live;background;video;
