@@ -1,105 +1,56 @@
+# Lively Wallpaper Linux
 
-<p align="center">
-  <img alt="Files Logo" src="resources/figma_promo_16x9.jpg" width="450" />
-  <h2 align="center">Lively Wallpaper</h2>
-</p>
+A Linux port/prototype of the popular [Lively Wallpaper](https://github.com/rocksdanister/lively) application. This project demonstrates a decoupled daemon-UI architecture using gRPC and Unix Domain Sockets to bring animated desktop wallpapers to Linux (X11 & Wayland).
 
-[![GitHub release](https://img.shields.io/github/release/rocksdanister/lively/all.svg)](https://github.com/rocksdanister/lively/releases)
-[![Github all releases](https://img.shields.io/github/downloads/rocksdanister/lively/total.svg)](https://github.com/rocksdanister/lively/releases)
-[![GitHub stars](https://img.shields.io/github/stars/rocksdanister/lively.svg)](https://github.com/rocksdanister/lively/stargazers)
-[![Documentation](https://img.shields.io/badge/Docs-WIP-red.svg)](https://github.com/rocksdanister/lively/wiki)
-[![Issues](https://img.shields.io/github/issues/rocksdanister/lively.svg)](https://github.com/rocksdanister/lively/issues)
-[![Crowdin](https://badges.crowdin.net/lively-wallpaper/localized.svg)](https://crowdin.com/project/lively-wallpaper)
+## Architecture
 
-## Contents
-- [About](#about)
-- [Features](#features)
-- [Download](#download)
-- [Support](#support)
-- [License](#license)
-
-## About
-<img src="/resources/main_preview.gif" width="600" height="338"/>
-
-Animated desktop wallpapers, bring your desktop to life!
-
-#### Join Discussions:
-* <a href="https://www.reddit.com/r/LivelyWallpaper/">Reddit</a>
-* <a href="https://github.com/rocksdanister/lively/discussions/">Github</a>
+*   **Lively.Linux.Daemon**: A headless background service running as a gRPC server on a local Unix socket (`/tmp/lively-grpc.sock`). It acts as the "Engine Layer", receiving commands and controlling video playback.
+*   **Lively.Linux.UI**: A modern desktop application built with [Avalonia UI](https://avaloniaui.net/). It acts as the "Control Layer" and gRPC client, allowing you to browse, download, and manage wallpapers.
 
 ## Features
-*Wait a sec, preview gif clips take some time to load.*
-#### Types Of Wallpapers
-| Wallpaper | Example |  Interactive | Resolution | Performance |
-|--|--|--|--|--|
-| Video/GIF | <img src="/resources/wallpaper_video.gif" width="256" height="144"/><br><a href="https://www.pexels.com/video/blue-texture-abstract-leaves-7710243/">Video</a> by Rostislav Uzunov | No| Fixed | Fixed |
-| Webpage | <img src="/resources/wallpaper_html.gif" width="256" height="144"/><br><a href="http://louie.co.nz/25th_hour/"> 25th Hour</a> by Loius Coyle  | Yes| Variable | Variable |
-| Application/Games | <img src="/resources/wallpaper_emulator.gif" width="256" height="144"/><br>Run Unity or Godot games as wallpaper | Yes | Variable | Variable |
-#### Screensavers
-<img src="/resources/screen_saver.gif" width="600" height="338"/>
 
-* Lively supports Windows screensaver.
-* Any wallpaper can be used as screensaver.
-* Multiple monitor supported.
-* [Learn more..](https://github.com/rocksdanister/lively/wiki/Screen-Saver)
-#### Automation
-<img src="/resources/rotary_demo.gif" width="600" height="338"/>
+*   **Online Gallery**: Browse and download community wallpapers directly from the Lively API.
+*   **Local Library**: Automatically scans and organizes your downloaded wallpapers.
+*   **Daemon Auto-Start**: The UI will automatically boot the daemon in the background if it isn't already running.
+*   **VLC Integration**: Leverages `cvlc` (headless VLC) to draw video wallpapers natively to the root window/background.
+*   **Wayland Support**: Uses `wlr-randr` to dynamically query available monitors on Wayland compositors (like Sway or Hyprland).
+*   **System Autostart**: One-click toggle in the UI to generate a `.desktop` file for launching on boot.
 
-* Lively can be controlled with command line arguments from terminal.
-* Integrate with other languages like Python or scripting software AutoHotKey.
-* [Learn more..](https://github.com/rocksdanister/lively/wiki/Command-Line-Controls)
-#### Lively API
-<img src="/resources/music_api.gif" width="600" height="338"/>
+## Requirements
 
-* Powerful set of API for developers to create interactive wallpapers.
-* Get hardware readings, audio graph, music information..
-* [Learn more..](https://github.com/rocksdanister/lively/wiki/API)
-#### Machine Learning
-<img src="/resources/wallpaper_depth.gif" width="600" height="338"/>
+*   [.NET 10.0 SDK](https://dotnet.microsoft.com/)
+*   `vlc` (For video wallpaper playback via `cvlc`)
+*   `wlr-randr` (Optional: for Wayland monitor detection)
 
-* Leverage Machine Learning inference to create dynamic wallpapers.
-* [Learn more..](https://github.com/rocksdanister/lively/wiki/Machine-Learning)
-#### More Features
-- Minimal webpage renderer powered by chromium.
-- Hardware accelerated video playback using mpv/vlc player with customizable video filters.
-- Easy to use; Just drag'n'drop media or webpages into lively to set as wallpaper.
-- Latest Windows 11 design using WinUI 3 + WindowsAppSDK framework.
-- Efficient, Lively is native application designed for Windows.
-- Fully opensource & free; no blackmagic, no features behind paywall.
-- Shadertoy.com urls are supported as wallpaper.
-#### Performance
- * Wallpaper playback pauses when fullscreen application/games run on the machine (~0% cpu, gpu usage). 
- * Set wallpaper playback rules based on running foreground application.
- * Can be set to pause wallpaper when running on battery power (laptops.)
- * Wallpaper automatically pauses when running remote desktop session.
+## Building & Running
 
-**_Lively is not officially affiliated with Unity technologies, godot, shadertoy;_**
-## Download
-##### Microsoft Store (Windows 10 1809 or above)
+### 1. Build the project
+```bash
+dotnet build Lively.Linux.UI/Lively.Linux.UI.csproj
+```
 
-[<img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="142px" height="52px">](https://apps.microsoft.com/store/detail/9NTM2QC6QWS7)
+### 2. Run the Application
+You only need to run the UI. The daemon will be automatically launched in the background.
+```bash
+dotnet run --project Lively.Linux.UI/Lively.Linux.UI.csproj
+```
 
-##### [Installer (Windows 10 1903 or above)](https://github.com/rocksdanister/lively/releases/latest)
+*If you prefer to run the daemon manually for debugging:*
+```bash
+dotnet run --project Lively.Linux.Daemon/Lively.Linux.Daemon.csproj
+```
 
-[Which version do I download?](https://github.com/rocksdanister/lively/wiki/Differences-Between-Distributions)
+## How it works
 
-## Support
-Are you a Lively fan and want to help out? here are some options..
+1. The UI uses `Lively.Gallery.Client` to fetch wallpaper metadata.
+2. Clicking **"Download"** fetches the `.zip` payload and extracts it to the local library.
+3. Clicking **"Set Wallpaper"** sends the `LivelyInfo.json` path and Monitor ID via gRPC to the Daemon.
+4. The Daemon parses the JSON, locates the video file, and executes `cvlc --video-wallpaper --loop --no-audio "/path/to/video.mp4"`.
+5. Clicking **"Close Wallpaper"** sends a termination signal over gRPC to safely kill the VLC process.
 
-#### Programmer
-Code contributions are welcome, [learn more..](https://github.com/rocksdanister/lively/wiki/Contributing-Guidelines)
+## Future Roadmap
 
-#### Designer
-Help improve UI/UX of Lively, [learn more..](https://github.com/rocksdanister/lively/wiki/Contributing-Guidelines)
-
-#### Localization
-Help translate Lively to more languages, [learn more..](https://github.com/rocksdanister/lively-translations)
-
-#### Suggestions & Bug report
-Suggest new features or file bug reports to improve Lively, [learn more..](https://github.com/rocksdanister/lively/issues)
-
-#### Spread the word
-Star this repository, leave a Microsoft store review or tell your friend.. any help is welcome :)
-
-## License
-Lively is licensed under [GPL-v3.](https://github.com/rocksdanister/lively/blob/core-separation/LICENSE)
+*   Implement a `WaylandWebPlayer` (via WebKitGTK or WPEWebKit) for HTML/Web wallpapers.
+*   Support for multiple concurrent wallpapers on multi-monitor setups (spawning multiple player instances).
+*   System Tray / AppIndicator support for the UI.
+*   Playback pause rules (e.g., pausing playback when a fullscreen game is running to save resources).

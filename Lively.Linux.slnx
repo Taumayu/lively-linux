@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Lively/">
+    <Project Path="src/Lively/Lively.Common/Lively.Common.csproj" />
+    <Project Path="src/Lively/Lively.Gallery.Client/Lively.Gallery.Client.csproj" />
+    <Project Path="src/Lively/Lively.Grpc.Client/Lively.Grpc.Client.csproj" />
+    <Project Path="src/Lively/Lively.Grpc.Common/Lively.Grpc.Common.csproj" />
+    <Project Path="src/Lively/Lively.Models/Lively.Models.csproj" />
+  </Folder>
+  <Project Path="Lively.Linux.Daemon/Lively.Linux.Daemon.csproj" />
+  <Project Path="Lively.Linux.UI/Lively.Linux.UI.csproj" />
+</Solution>
