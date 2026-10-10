@@ -81,7 +81,7 @@ public partial class MainWindow : Window
         {
             try 
             {
-                var basePath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", ".."));
+                var basePath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", ".."));
                 var daemonProject = System.IO.Path.Combine(basePath, "Lively.Linux.Daemon", "Lively.Linux.Daemon.csproj");
                 
                 if (System.IO.File.Exists(daemonProject))

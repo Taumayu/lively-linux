@@ -1,39 +1,36 @@
 using Grpc.Net.Client;
-using System.Net.Sockets;
-using Lively.Grpc.Common.Proto.Desktop;
-using System;
-using System.Threading.Tasks;
 using System.Net.Http;
+using System.Net.Sockets;
+using System.Threading.Tasks;
+using System;
 
-var socketPath = "/tmp/lively-grpc.sock";
-var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
+class Program
 {
-    HttpHandler = new SocketsHttpHandler
+    static async Task Main()
     {
-        ConnectCallback = async (context, token) =>
+        var socketPath = "/tmp/lively-grpc.sock";
+        var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
         {
-            var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
-            try
+            HttpHandler = new SocketsHttpHandler
             {
-                await socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath), token);
-                return new NetworkStream(socket, ownsSocket: true);
+                ConnectCallback = async (context, token) =>
+                {
+                    Console.WriteLine("ConnectCallback invoked!");
+                    var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+                    await socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath), token);
+                    return new NetworkStream(socket, ownsSocket: true);
+                }
             }
-            catch
-            {
-                socket.Dispose();
-                throw;
-            }
+        });
+        
+        var client = new Lively.Grpc.Common.Proto.Desktop.DesktopServiceClient(channel);
+        try 
+        {
+            await client.SetWallpaperAsync(new Lively.Grpc.Common.Proto.Desktop.SetWallpaperRequest { DisplayId = "1", FilePath = "test" });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
         }
     }
-});
-
-var client = new DesktopService.DesktopServiceClient(channel);
-
-Console.WriteLine("Sending SetWallpaper request to Daemon...");
-try {
-    await client.SetWallpaperAsync(new SetWallpaperRequest { LivelyInfoPath = "/fake/path/LivelyInfo.json" });
-    Console.WriteLine("Success! gRPC IPC works.");
-}
-catch (Exception e) {
-    Console.WriteLine("Error: " + e.Message);
 }

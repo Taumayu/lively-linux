@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 export PATH="$HOME/.dotnet:$PATH"
+export DOTNET_ROOT="$HOME/.dotnet"
 
 DAEMON_BIN="$HOME/.local/share/lively-linux/daemon/Lively.Linux.Daemon"
 UI_BIN="$HOME/.local/share/lively-linux/ui/Lively.Linux.UI"
