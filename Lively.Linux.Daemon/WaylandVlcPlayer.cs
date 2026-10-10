@@ -18,14 +18,18 @@ namespace Lively.Linux.Daemon
         {
             Stop();
 
+            var vlcPath = "/usr/bin/vlc";
+            var livelyVlcPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "lively-wallpaper-vlc");
+            if (!System.IO.File.Exists(livelyVlcPath))
+            {
+                try { System.IO.File.CreateSymbolicLink(livelyVlcPath, vlcPath); }
+                catch { livelyVlcPath = "cvlc"; } // fallback if symlink fails
+            }
+
             var startInfo = new ProcessStartInfo
             {
-                FileName = "cvlc", // Command-line VLC
-                // --video-wallpaper draws to root window (X11/XWayland).
-                // --loop loops the video
-                // --no-audio mutes it
-                // --no-osd removes on-screen display
-                Arguments = $"--video-title=lively-wallpaper --video-wallpaper --loop --no-audio --no-osd \"{filePath}\"",
+                FileName = livelyVlcPath,
+                Arguments = $"-I dummy --video-title=lively-wallpaper --video-wallpaper --loop --no-audio --no-osd \"{filePath}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
