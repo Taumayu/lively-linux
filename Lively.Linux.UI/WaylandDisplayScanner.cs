@@ -29,6 +29,7 @@ public static class WaylandDisplayScanner
             {
                 FileName = "wlr-randr",
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
@@ -83,6 +84,7 @@ public static class WaylandDisplayScanner
                     FileName = "xrandr",
                     Arguments = "--query",
                     RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
