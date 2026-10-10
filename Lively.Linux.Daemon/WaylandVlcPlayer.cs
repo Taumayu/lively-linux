@@ -25,7 +25,7 @@ namespace Lively.Linux.Daemon
                 // --loop loops the video
                 // --no-audio mutes it
                 // --no-osd removes on-screen display
-                Arguments = $"--video-wallpaper --loop --no-audio --no-osd \"{filePath}\"",
+                Arguments = $"--video-title=lively-wallpaper --video-wallpaper --loop --no-audio --no-osd \"{filePath}\"",
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
