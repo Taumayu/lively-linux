@@ -27,7 +27,7 @@ public static class AutostartManager
                 Directory.CreateDirectory(dir);
             }
 
-            var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Lively.Linux.UI");
+            var exePath = Environment.ProcessPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Lively.Linux.UI");
             
             var desktopFile = $@"
 [Desktop Entry]

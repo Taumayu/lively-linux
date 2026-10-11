@@ -22,7 +22,16 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 builder.Services.AddGrpc();
-builder.Services.AddSingleton<Lively.Linux.Daemon.IPlayer, Lively.Linux.Daemon.WaylandVlcPlayer>();
+var isWayland = Environment.GetEnvironmentVariable("XDG_SESSION_TYPE")?.ToLower() == "wayland";
+var isKde = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP")?.ToLower().Contains("kde") == true;
+
+Lively.Linux.Daemon.IPlayer videoPlayer = (isWayland && !isKde)
+    ? new Lively.Linux.Daemon.WaylandMpvPlayer()
+    : new Lively.Linux.Daemon.WaylandVlcPlayer();
+
+Lively.Linux.Daemon.IPlayer webPlayer = new Lively.Linux.Daemon.WaylandWebPlayer();
+
+builder.Services.AddSingleton<Lively.Linux.Daemon.IPlayer>(new Lively.Linux.Daemon.CompositeWallpaperPlayer(videoPlayer, webPlayer));
 
 var app = builder.Build();
 

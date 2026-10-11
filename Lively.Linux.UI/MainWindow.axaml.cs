@@ -81,18 +81,40 @@ public partial class MainWindow : Window
         {
             try 
             {
-                var basePath = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", ".."));
-                var daemonProject = System.IO.Path.Combine(basePath, "Lively.Linux.Daemon", "Lively.Linux.Daemon.csproj");
+                var uiDir = System.IO.Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                var prodDaemon = System.IO.Path.Combine(uiDir, "Lively.Linux.Daemon");
+                var scriptDaemon = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "lively-linux", "daemon", "Lively.Linux.Daemon");
+                var devDaemonProject = System.IO.Path.GetFullPath(System.IO.Path.Combine(uiDir, "..", "..", "..", "..", "Lively.Linux.Daemon", "Lively.Linux.Daemon.csproj"));
                 
-                if (System.IO.File.Exists(daemonProject))
+                System.Diagnostics.ProcessStartInfo pInfo = null;
+
+                if (System.IO.File.Exists(prodDaemon))
                 {
-                    var pInfo = new System.Diagnostics.ProcessStartInfo
+                    pInfo = new System.Diagnostics.ProcessStartInfo { FileName = prodDaemon, UseShellExecute = false, CreateNoWindow = true };
+                }
+                else if (System.IO.File.Exists(devDaemonProject))
+                {
+                    pInfo = new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = "dotnet",
-                        Arguments = $"run --project \"{daemonProject}\"",
+                        Arguments = $"run --project \"{devDaemonProject}\"",
                         UseShellExecute = false,
                         CreateNoWindow = true
                     };
+                }
+                else if (System.IO.File.Exists(scriptDaemon))
+                {
+                    pInfo = new System.Diagnostics.ProcessStartInfo { FileName = scriptDaemon, UseShellExecute = false, CreateNoWindow = true };
+                }
+
+                if (pInfo != null)
+                {
+                    var dotnetRoot = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dotnet");
+                    if (System.IO.Directory.Exists(dotnetRoot))
+                    {
+                        pInfo.Environment["DOTNET_ROOT"] = dotnetRoot;
+                        pInfo.Environment["PATH"] = dotnetRoot + ":" + (Environment.GetEnvironmentVariable("PATH") ?? "");
+                    }
                     System.Diagnostics.Process.Start(pInfo);
                     System.Threading.Thread.Sleep(2000); // Wait for daemon to boot and bind socket
                 }
@@ -121,19 +143,31 @@ public partial class MainWindow : Window
     {
         try 
         {
-            var localPath = "/home/auma/Projects/lively-linux/TestWallpapers";
+            var localPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "lively-linux", "wallpapers");
+            if (!System.IO.Directory.Exists(localPath)) System.IO.Directory.CreateDirectory(localPath);
+            
+            LocalLibraryScanner.EnsureDefaultWallpapers(localPath);
+
             var localWallpapers = LocalLibraryScanner.ScanLibrary(localPath);
             LocalWallpapersListBox.ItemsSource = localWallpapers;
 
-            var query = new SearchQueryBuilder().Build();
-            var page = await _galleryClient.SearchWallpapers(query);
-            WallpapersListBox.ItemsSource = page.Data;
-            
-            StatusTextBlock.Text = $"Status: Loaded {localWallpapers.Count} local, {page.Data.Count} online.";
+            StatusTextBlock.Text = $"Status: Loaded {localWallpapers.Count} local wallpapers.";
+
+            try 
+            {
+                var query = new SearchQueryBuilder().Build();
+                var page = await _galleryClient.SearchWallpapers(query);
+                WallpapersListBox.ItemsSource = page.Data;
+                StatusTextBlock.Text = $"Status: Loaded {localWallpapers.Count} local, {page.Data.Count} online.";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Online gallery unavailable: " + ex.Message);
+            }
         }
         catch (Exception ex)
         {
-            StatusTextBlock.Text = "Error loading gallery: " + ex.Message;
+            StatusTextBlock.Text = "Error loading wallpapers: " + ex.Message;
         }
     }
 
@@ -160,11 +194,14 @@ public partial class MainWindow : Window
             StatusTextBlock.Text = $"Downloading {selected.Title}...";
             try
             {
-                var zipPath = $"/home/auma/Projects/lively-linux/TestWallpapers/{selected.Id}.zip";
+                var localPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "lively-linux", "wallpapers");
+                if (!System.IO.Directory.Exists(localPath)) System.IO.Directory.CreateDirectory(localPath);
+                
+                var zipPath = System.IO.Path.Combine(localPath, $"{selected.Id}.zip");
                 
                 await _galleryClient.DownloadWallpaperAsync(selected.Id, zipPath, System.Threading.CancellationToken.None);
                 
-                var extractPath = $"/home/auma/Projects/lively-linux/TestWallpapers/{selected.Id}";
+                var extractPath = System.IO.Path.Combine(localPath, selected.Id);
                 if (System.IO.Directory.Exists(extractPath))
                     System.IO.Directory.Delete(extractPath, true);
                 

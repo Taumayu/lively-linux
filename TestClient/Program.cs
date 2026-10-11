@@ -6,7 +6,7 @@ using System;
 
 class Program
 {
-    static async Task Main()
+    static async Task Main(string[] args)
     {
         var socketPath = "/tmp/lively-grpc.sock";
         var channel = GrpcChannel.ForAddress("http://localhost", new GrpcChannelOptions
@@ -23,10 +23,21 @@ class Program
             }
         });
         
-        var client = new Lively.Grpc.Common.Proto.Desktop.DesktopServiceClient(channel);
+        var client = new Lively.Grpc.Common.Proto.Desktop.DesktopService.DesktopServiceClient(channel);
+        if (args.Length > 0 && args[0].Equals("close", StringComparison.OrdinalIgnoreCase))
+        {
+            await client.CloseAllWallpapersAsync(new Lively.Grpc.Common.Proto.Desktop.CloseAllWallpapersRequest());
+            Console.WriteLine("CloseAllWallpapers call succeeded!");
+            return;
+        }
+
         try 
         {
-            await client.SetWallpaperAsync(new Lively.Grpc.Common.Proto.Desktop.SetWallpaperRequest { DisplayId = "1", FilePath = "test" });
+            await client.SetWallpaperAsync(new Lively.Grpc.Common.Proto.Desktop.SetWallpaperRequest { 
+                LivelyInfoPath = args.Length > 0 ? args[0] : "/home/auma/Projects/lively-linux/wallpapers/Fluids/LivelyInfo.json",
+                MonitorId = "eDP-1" 
+            });
+            Console.WriteLine("SetWallpaper call succeeded!");
         }
         catch (Exception ex)
         {

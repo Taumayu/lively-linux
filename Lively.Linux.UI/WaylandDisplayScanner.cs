@@ -27,6 +27,55 @@ public static class WaylandDisplayScanner
         {
             var pInfo = new ProcessStartInfo
             {
+                FileName = "kscreen-doctor",
+                Arguments = "-o",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            
+            using var process = Process.Start(pInfo);
+            if (process != null)
+            {
+                var output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+
+                var lines = output.Split('\n');
+                DisplayInfo currentDisplay = null;
+
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("Output: "))
+                    {
+                        var parts = line.Split(' ');
+                        if (parts.Length > 2)
+                        {
+                            currentDisplay = new DisplayInfo { Name = parts[2] };
+                            displays.Add(currentDisplay);
+                        }
+                    }
+                    else if (currentDisplay != null && line.Trim().StartsWith("enabled"))
+                    {
+                        currentDisplay.IsEnabled = true;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("kscreen-doctor failed: " + ex.Message);
+        }
+
+        if (displays.Count > 0)
+        {
+            return displays.Where(d => d.IsEnabled).ToList();
+        }
+
+        try
+        {
+            var pInfo = new ProcessStartInfo
+            {
                 FileName = "wlr-randr",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
