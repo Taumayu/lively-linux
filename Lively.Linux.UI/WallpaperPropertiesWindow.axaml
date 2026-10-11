@@ -1,0 +1,41 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+        x:Class="Lively.Linux.UI.WallpaperPropertiesWindow"
+        Title="Paramètres du fond d'écran"
+        Width="640" Height="780"
+        MinWidth="520" MinHeight="500"
+        Background="#18181B"
+        WindowStartupLocation="CenterOwner">
+    <Grid RowDefinitions="Auto, *, Auto">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#242429" CornerRadius="10" Margin="16,16,16,8" Padding="14">
+            <Grid ColumnDefinitions="Auto, *">
+                <Border Grid.Column="0" CornerRadius="8" Width="72" Height="72" ClipToBounds="True" Background="#111" Margin="0,0,16,0">
+                    <Image x:Name="ThumbnailImage" asyncImageLoader:ImageLoader.Source="" Stretch="UniformToFill" />
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                    <TextBlock x:Name="TitleTextBlock" Text="Titre du fond d'écran" Foreground="White" FontSize="18" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="AuthorTextBlock" Text="Auteur" Foreground="#888892" FontSize="12"/>
+                    <TextBlock x:Name="DescTextBlock" Text="Description" Foreground="#CCCCCC" FontSize="12" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="⚡ Modifications appliquées en temps réel sur le bureau" Foreground="#2ECC71" FontSize="11" FontWeight="SemiBold" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Dynamic Controls -->
+        <ScrollViewer Grid.Row="1" Margin="16,8,16,8" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ControlsContainer" Spacing="12">
+                <!-- Dynamically populated from LivelyProperties.json -->
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="#202025" BorderBrush="#303038" BorderThickness="0,1,0,0" Padding="16,12">
+            <DockPanel LastChildFill="False">
+                <Button x:Name="RestoreDefaultsButton" DockPanel.Dock="Left" Content="🔄 Réinitialiser par défaut" Background="#383842" Foreground="White" Padding="14,9" CornerRadius="6" Click="RestoreDefaultsButton_Click"/>
+                <Button x:Name="CloseButton" DockPanel.Dock="Right" Content="Fermer" Background="#007ACC" Foreground="White" Padding="24,9" FontWeight="SemiBold" CornerRadius="6" Click="CloseButton_Click"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

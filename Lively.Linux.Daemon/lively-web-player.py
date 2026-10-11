@@ -57,6 +57,43 @@ gi.require_version('Gtk', '3.0')
 gi.require_version('WebKit2', '4.1')
 from gi.repository import Gtk, Gdk, WebKit2, GLib
 
+PROPERTY_DISPATCHER = None
+
+
+def load_lively_properties(prop_file):
+    if not os.path.exists(prop_file):
+        return {}
+    try:
+        with open(prop_file, "r", encoding="utf-8") as f:
+            lines = [l for l in f.read().splitlines() if not l.strip().startswith("//")]
+        return json.loads("\n".join(lines))
+    except Exception as e:
+        sys.stderr.write(f"Failed to read {prop_file}: {e}\n")
+        return {}
+
+
+def update_lively_properties_file(wallpaper_dir, name, val):
+    if not wallpaper_dir:
+        return
+    prop_file = os.path.join(wallpaper_dir, "LivelyProperties.json")
+    if not os.path.exists(prop_file):
+        return
+    try:
+        props = load_lively_properties(prop_file)
+        if name in props and isinstance(props[name], dict):
+            prop_info = props[name]
+            ptype = prop_info.get("type")
+            save_val = val
+            if ptype == "folderDropdown":
+                folder = prop_info.get("folder", "")
+                if folder and isinstance(val, str) and (val.startswith(folder + "/") or val.startswith(folder + "\\")):
+                    save_val = os.path.basename(val)
+            prop_info["value"] = save_val
+            with open(prop_file, "w", encoding="utf-8") as f:
+                json.dump(props, f, indent=2)
+    except Exception as ex:
+        sys.stderr.write(f"Failed to update LivelyProperties.json: {ex}\n")
+
 
 class WallpaperHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, directory=None, **kwargs):
@@ -70,9 +107,31 @@ class WallpaperHTTPHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
+    def do_POST(self):
+        if self.path == "/api/property":
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+                body = self.rfile.read(length)
+                data = json.loads(body.decode('utf-8'))
+                name = data.get("Name") or data.get("name")
+                val = data.get("Value") if "Value" in data else data.get("value")
+                if name is not None and PROPERTY_DISPATCHER:
+                    GLib.idle_add(PROPERTY_DISPATCHER, name, val, True)
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(b'{"status":"ok"}')
+            except Exception as e:
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(str(e).encode('utf-8'))
+        else:
+            self.send_response(404)
+            self.end_headers()
+
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', '*')
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         super().end_headers()
@@ -405,24 +464,19 @@ def main():
 
         props_to_send = []
         prop_file = os.path.join(wallpaper_dir, "LivelyProperties.json")
-        if os.path.exists(prop_file):
-            try:
-                with open(prop_file, "r", encoding="utf-8") as f:
-                    props = json.load(f)
+        props = load_lively_properties(prop_file)
 
-                for k, v in props.items():
-                    if isinstance(v, dict):
-                        ptype = v.get("type")
-                        pval = v.get("value")
-                        if pval is None:
-                            continue
-                        if ptype == "folderDropdown":
-                            folder = v.get("folder", "")
-                            if folder and not str(pval).startswith(folder + "/"):
-                                pval = f"{folder}/{pval}"
-                        props_to_send.append((k, pval))
-            except Exception as e:
-                sys.stderr.write(f"Failed to read LivelyProperties.json: {e}\n")
+        for k, v in props.items():
+            if isinstance(v, dict):
+                ptype = v.get("type")
+                pval = v.get("value")
+                if pval is None:
+                    continue
+                if ptype == "folderDropdown":
+                    folder = v.get("folder", "")
+                    if folder and not str(pval).startswith(folder + "/"):
+                        pval = f"{folder}/{pval}"
+                props_to_send.append((k, pval))
 
         js_statements = []
         for k, pval in props_to_send:
@@ -446,6 +500,65 @@ def main():
         mpris_manager.trigger_async_update()
 
     view.connect("load-changed", on_load_changed)
+
+    def dispatch_property(name, val, save=True):
+        val_for_js = val
+        if wallpaper_dir:
+            prop_file = os.path.join(wallpaper_dir, "LivelyProperties.json")
+            props = load_lively_properties(prop_file)
+            if name in props and isinstance(props[name], dict):
+                ptype = props[name].get("type")
+                if ptype == "folderDropdown":
+                    folder = props[name].get("folder", "")
+                    if folder and not str(val).startswith(folder + "/"):
+                        val_for_js = f"{folder}/{val}"
+
+        js = (
+            f"if (typeof livelyPropertyListener === 'function') {{ "
+            f"  try {{ livelyPropertyListener({json.dumps(name)}, {json.dumps(val_for_js)}); }} "
+            f"  catch(e) {{ console.error('livelyPropertyListener error:', e); }} "
+            f"}}"
+        )
+        view.run_javascript(js, None, None, None)
+        if save and wallpaper_dir:
+            update_lively_properties_file(wallpaper_dir, name, val)
+
+    global PROPERTY_DISPATCHER
+    PROPERTY_DISPATCHER = dispatch_property
+
+    def stdin_reader():
+        while True:
+            try:
+                line = sys.stdin.readline()
+                if not line:
+                    break
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    name = data.get("Name") or data.get("name")
+                    val = data.get("Value") if "Value" in data else data.get("value")
+                    msg_type = data.get("Type") or data.get("type")
+
+                    if msg_type in (20, "lp_button"):
+                        val = True
+                    elif msg_type in (4, "cmd_reload"):
+                        GLib.idle_add(view.reload)
+                        continue
+                    elif msg_type in (5, "cmd_close"):
+                        GLib.idle_add(Gtk.main_quit)
+                        break
+
+                    if name is not None:
+                        GLib.idle_add(dispatch_property, name, val, True)
+                except Exception as ex:
+                    sys.stderr.write(f"JSON parse error on stdin: {ex}\n")
+            except Exception as e:
+                sys.stderr.write(f"stdin reader error: {e}\n")
+                break
+
+    threading.Thread(target=stdin_reader, daemon=True).start()
 
     win.add(view)
     view.load_uri(uri)

@@ -50,6 +50,8 @@ namespace Lively.Linux.Daemon
 
         public void Resume() => _activePlayer?.Resume();
 
+        public void SendMessage(string msg) => _activePlayer?.SendMessage(msg);
+
         public static bool IsWebWallpaper(string path)
         {
             if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 

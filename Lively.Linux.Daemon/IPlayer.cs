@@ -7,4 +7,5 @@ public interface IPlayer
     void Pause();
     void Resume();
     void Stop();
+    void SendMessage(string msg);
 }

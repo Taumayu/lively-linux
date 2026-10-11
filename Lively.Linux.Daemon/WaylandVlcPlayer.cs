@@ -82,6 +82,11 @@ namespace Lively.Linux.Daemon
             // Placeholder
         }
 
+        public void SendMessage(string msg)
+        {
+            // No-op for video player
+        }
+
         private static void EnsureKdeRules()
         {
             try

@@ -4,6 +4,7 @@ using Grpc.Net.Client;
 using System.Net.Sockets;
 using Lively.Grpc.Common.Proto.Desktop;
 using System;
+using System.Threading.Tasks;
 using System.Net.Http;
 using Lively.Gallery.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -176,6 +177,17 @@ public partial class MainWindow : Window
         if (LocalWallpapersListBox.SelectedItem is LivelyInfoModel selected)
         {
             WallpaperPathTextBox.Text = selected.Id;
+            var dir = System.IO.Path.GetDirectoryName(selected.Id);
+            var propPath = System.IO.Path.Combine(dir ?? "", "LivelyProperties.json");
+            bool hasProps = System.IO.File.Exists(propPath);
+
+            CustomiseWallpaperButton.IsEnabled = hasProps;
+            CustomiseWallpaperButton.Content = hasProps
+                ? "⚙ Paramètres du fond d'écran"
+                : "Paramètres (Non disponible)";
+            CustomiseWallpaperButton.Background = hasProps
+                ? Avalonia.Media.Brush.Parse("#6C5CE7")
+                : Avalonia.Media.Brush.Parse("#44444A");
         }
     }
 
@@ -184,7 +196,52 @@ public partial class MainWindow : Window
         if (WallpapersListBox.SelectedItem is WallpaperDto selected)
         {
             WallpaperPathTextBox.Text = selected.Id;
+            CustomiseWallpaperButton.IsEnabled = false;
+            CustomiseWallpaperButton.Content = "Paramètres (Télécharger d'abord)";
+            CustomiseWallpaperButton.Background = Avalonia.Media.Brush.Parse("#44444A");
         }
+    }
+
+    private void CustomiseWallpaperButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (LocalWallpapersListBox.SelectedItem is LivelyInfoModel selected)
+        {
+            OpenCustomiseDialog(selected);
+        }
+    }
+
+    private void ContextMenuCustomise_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.DataContext is LivelyInfoModel model)
+        {
+            OpenCustomiseDialog(model);
+        }
+        else if (LocalWallpapersListBox.SelectedItem is LivelyInfoModel selected)
+        {
+            OpenCustomiseDialog(selected);
+        }
+    }
+
+    private async void ContextMenuSetWallpaper_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem menuItem && menuItem.DataContext is LivelyInfoModel model)
+        {
+            WallpaperPathTextBox.Text = model.Id;
+            LocalWallpapersListBox.SelectedItem = model;
+            await ApplyCurrentWallpaperAsync();
+        }
+    }
+
+    private void OpenCustomiseDialog(LivelyInfoModel model)
+    {
+        var displayId = "eDP-1";
+        if (DisplayComboBox.SelectedItem is DisplayInfo item)
+        {
+            displayId = item.Name;
+        }
+
+        var dialog = new WallpaperPropertiesWindow(model, _client, displayId);
+        dialog.Show(this);
     }
 
     private async void DownloadWallpaperButton_Click(object sender, RoutedEventArgs e)
@@ -222,7 +279,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void SetWallpaperButton_Click(object sender, RoutedEventArgs e)
+    private async Task ApplyCurrentWallpaperAsync()
     {
         StatusTextBlock.Text = "Status: Sending request...";
 
@@ -244,6 +301,11 @@ public partial class MainWindow : Window
         {
             StatusTextBlock.Text = "Error: " + ex.Message;
         }
+    }
+
+    private async void SetWallpaperButton_Click(object sender, RoutedEventArgs e)
+    {
+        await ApplyCurrentWallpaperAsync();
     }
 
     private async void CloseWallpaperButton_Click(object sender, RoutedEventArgs e)

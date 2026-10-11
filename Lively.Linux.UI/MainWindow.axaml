@@ -26,6 +26,12 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="localModels:LivelyInfoModel">
                                 <Border Background="#333" CornerRadius="8" Margin="5" Width="220" Height="300" ClipToBounds="True">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Appliquer comme fond d'écran" Click="ContextMenuSetWallpaper_Click"/>
+                                            <MenuItem Header="⚙ Paramètres du fond d'écran" Click="ContextMenuCustomise_Click"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
                                     <Grid RowDefinitions="150, *">
                                         <!-- Thumbnail Image -->
                                         <Image Grid.Row="0" asyncImageLoader:ImageLoader.Source="{Binding Thumbnail}" Stretch="UniformToFill" />
@@ -84,6 +90,7 @@
                 
                 <Button x:Name="DownloadWallpaperButton" Content="Download (Online Gallery)" Background="#28A745" Foreground="White" Padding="15,10" HorizontalAlignment="Stretch" Click="DownloadWallpaperButton_Click"/>
                 <Button x:Name="SetWallpaperButton" Content="Set Wallpaper (Send gRPC)" Background="#007ACC" Foreground="White" Padding="15,10" HorizontalAlignment="Stretch" Click="SetWallpaperButton_Click"/>
+                <Button x:Name="CustomiseWallpaperButton" Content="⚙ Paramètres du fond d'écran" Background="#6C5CE7" Foreground="White" Padding="15,10" HorizontalAlignment="Stretch" Click="CustomiseWallpaperButton_Click" IsEnabled="False"/>
                 <Button x:Name="CloseWallpaperButton" Content="Close Wallpaper" Background="#DC3545" Foreground="White" Padding="15,10" HorizontalAlignment="Stretch" Click="CloseWallpaperButton_Click"/>
                 <Button x:Name="AutostartButton" Content="Toggle Autostart" Background="#444" Foreground="White" Padding="15,10" HorizontalAlignment="Stretch" Click="AutostartButton_Click"/>
                 

@@ -34,6 +34,8 @@ namespace Lively.Linux.Daemon
                 FileName = "python3",
                 Arguments = $"\"{scriptPath}\" {displayArg} \"{filePath}\"",
                 UseShellExecute = false,
+                RedirectStandardInput = true,
+                StandardInputEncoding = System.Text.Encoding.UTF8,
                 CreateNoWindow = true
             };
 
@@ -41,6 +43,22 @@ namespace Lively.Linux.Daemon
             _process = Process.Start(startInfo);
 
             ApplyKdeWindowPropertiesAsync();
+        }
+
+        public void SendMessage(string msg)
+        {
+            if (_process != null && !_process.HasExited)
+            {
+                try
+                {
+                    _process.StandardInput.WriteLine(msg);
+                    _process.StandardInput.Flush();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[WaylandWebPlayer] Error sending message: {ex.Message}");
+                }
+            }
         }
 
         public void Stop()

@@ -73,6 +73,11 @@ public class WaylandMpvPlayer : IPlayer, IDisposable
         });
     }
 
+    public void SendMessage(string msg)
+    {
+        // No-op for video player
+    }
+
     public void Dispose()
     {
         Stop();

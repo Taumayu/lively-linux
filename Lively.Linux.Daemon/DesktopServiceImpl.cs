@@ -50,7 +50,13 @@ public class DesktopServiceImpl : DesktopService.DesktopServiceBase
         _player.Stop();
         return Task.FromResult(new Empty());
     }
-    
-    // We can leave the other methods unimplemented for this prototype,
-    // they will throw RpcException(StatusCode.Unimplemented) automatically.
+
+    public override Task<Empty> SendMessageWallpaper(WallpaperMessageRequest request, ServerCallContext context)
+    {
+        if (!string.IsNullOrEmpty(request.Msg))
+        {
+            _player.SendMessage(request.Msg);
+        }
+        return Task.FromResult(new Empty());
+    }
 }
